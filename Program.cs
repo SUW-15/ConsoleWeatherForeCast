@@ -13,9 +13,21 @@ namespace UpdateDBForeCast
         public static Timer aTimer;
         static HttpClient client = new HttpClient();
         static List<Temperature> ListOfTemperatures = new List<Temperature>();
-        static Random rnd1 = new Random();
+
         static Random rnd2 = new Random();
-        static int round = 0;
+        static Random rnd1 = new Random();
+        private static readonly Random random = new Random();
+        private static readonly object syncLock = new object();
+        private static int round=0;
+
+        public static int RandomNumber(int min, int max)
+        {
+            lock (syncLock)
+            {
+                return random.Next(max, min);
+            }
+        }
+
 
         static void Main(string[] args)
         {
@@ -23,6 +35,9 @@ namespace UpdateDBForeCast
             RunAsync().Wait();
 
         }
+
+
+
 
         static async Task RunAsync()
         {
@@ -53,30 +68,33 @@ namespace UpdateDBForeCast
 
 
 
+
+
+
         //static int result = 0;
-        private async static  void progress(object source, ElapsedEventArgs e)
+        private async static void progress(object source, ElapsedEventArgs e)
         {
             Console.Clear();
 
-            foreach(Temperature temp in ListOfTemperatures)
+            foreach (Temperature temp in ListOfTemperatures)
             {
 
 
-                    int value1 = rnd1.Next(-15, 25);
-                    int value2 = rnd2.Next(-20, 30);
-                    int result = (value1 + value2);
-                    round = 1;
-                    temp.CityTemperature = +result-- / 2;
-                    round = 2;
-                    temp.CityTemperature = +result-- / 3;
-                    round = 3;
-                    temp.CityTemperature = +result-- / 2;
-                    round++;
-                    temp.CityTemperature = +result-- / round++;
-                    await UpdateTemperatureAsync(temp);
-
-
-
+                int value1 = random.Next(-15, 25);
+                int value2 = random.Next(-20, 30);
+                int result = (value1 + value2);
+                round = 1;
+                temp.CityTemperature = +result-- / 2;
+                aTimer = new Timer(1000);
+                round = 2;
+                temp.CityTemperature = +result-- / 3;
+                aTimer = new Timer(3000);
+                round = 3;
+                temp.CityTemperature = +result-- / 2;
+                aTimer = new Timer(2000);
+                round++;
+                temp.CityTemperature = +result-- / round++;
+                await UpdateTemperatureAsync(temp);
 
 
             }
@@ -85,6 +103,15 @@ namespace UpdateDBForeCast
             await GetAllTemperatures();
 
         }
+
+
+
+
+
+
+
+
+
 
 
         //Update temperature
@@ -105,14 +132,14 @@ namespace UpdateDBForeCast
             HttpResponseMessage res = await client.GetAsync("api/TemperaturesApi");
             res.EnsureSuccessStatusCode();
 
-            var temp =  res.Content.ReadAsAsync<IEnumerable<Temperature>>().Result;
+            var temp = res.Content.ReadAsAsync<IEnumerable<Temperature>>().Result;
 
             foreach (var t in temp)
             {
                 Console.WriteLine("{0} {1}", t.CityName, t.CityTemperature);
                 ListOfTemperatures.Add(t);
             }
-           Console.ReadLine();
+            Console.ReadLine();
         }
     }
 }
