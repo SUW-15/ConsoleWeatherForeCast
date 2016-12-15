@@ -13,6 +13,9 @@ namespace UpdateDBForeCast
         public static Timer aTimer;
         static HttpClient client = new HttpClient();
         static List<Temperature> ListOfTemperatures = new List<Temperature>();
+        static Random rnd1 = new Random();
+        static Random rnd2 = new Random();
+        static int round = 0;
 
         static void Main(string[] args)
         {
@@ -35,7 +38,7 @@ namespace UpdateDBForeCast
                 aTimer.Elapsed += new ElapsedEventHandler(progress);
                 aTimer.AutoReset = true;
                 aTimer.Enabled = true;
-                GetAllTemperatures();
+                await GetAllTemperatures();
 
 
 
@@ -50,21 +53,36 @@ namespace UpdateDBForeCast
 
 
 
+        //static int result = 0;
         private async static  void progress(object source, ElapsedEventArgs e)
         {
-            //ListOfTemperatures = new List<Temperature>();
             Console.Clear();
 
-
-            foreach (var temp in ListOfTemperatures)
+            foreach(Temperature temp in ListOfTemperatures)
             {
-                Random rnd = new Random();
-                var value = rnd.Next(-20, 10);
-                temp.CityTemperature = value;
-                await UpdateTemperatureAsync(temp);
+
+
+                    int value1 = rnd1.Next(-15, 25);
+                    int value2 = rnd2.Next(-20, 30);
+                    int result = (value1 + value2);
+                    round = 1;
+                    temp.CityTemperature = +result-- / 2;
+                    round = 2;
+                    temp.CityTemperature = +result-- / 3;
+                    round = 3;
+                    temp.CityTemperature = +result-- / 2;
+                    round++;
+                    temp.CityTemperature = +result-- / round++;
+                    await UpdateTemperatureAsync(temp);
+
+
+
+
 
             }
-            GetAllTemperatures();
+
+
+            await GetAllTemperatures();
 
         }
 
@@ -82,7 +100,7 @@ namespace UpdateDBForeCast
 
 
 
-        static async void GetAllTemperatures()
+        static async Task GetAllTemperatures()
         {
             HttpResponseMessage res = await client.GetAsync("api/TemperaturesApi");
             res.EnsureSuccessStatusCode();
@@ -94,7 +112,7 @@ namespace UpdateDBForeCast
                 Console.WriteLine("{0} {1}", t.CityName, t.CityTemperature);
                 ListOfTemperatures.Add(t);
             }
-            Console.ReadLine();
+           Console.ReadLine();
         }
     }
 }
